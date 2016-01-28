@@ -1,9 +1,9 @@
 mock-ssh-server - An SSH server for testing purposes
 ====================================================
 
-``mock-ssh-server`` is a context manager that implements an SSH server
-for testing purposes. It is built on top of `paramiko`_, so it does not
-need OpenSSH binaries to be installed.
+``mock-ssh-server`` packs a Python context manager that implements an SSH
+server for testing purposes. It is built on top of `paramiko`_, so it does
+not need OpenSSH binaries to be installed.
 
 
 Sample usage
@@ -15,15 +15,15 @@ As a `py.test`_ fixture::
 
     from pytest import yield_fixture
 
-    from mockssh import Server
+    import mockssh
 
 
-    @yield_fixture(scope="function")
+    @yield_fixture()
     def server():
         users = {
             "sample-user": "/path/to/user-private-key,
         }
-        with Server(users) as s:
+        with mockssh.Server(users) as s:
             yield s
 
 
