@@ -1,0 +1,6 @@
+*.py[co]
+.cache/
+.tox/
+*.egg-info/
+/build/
+/dist/
