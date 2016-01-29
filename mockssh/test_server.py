@@ -29,3 +29,13 @@ def test_invalid_user(server):
     with raises(KeyError) as exc:
         server.client("unknown-user")
     assert exc.value.args[0] == "unknown-user"
+
+
+def test_add_user(server, user_key_path):
+    with raises(KeyError):
+        server.client("new-user")
+
+    server.add_user("new-user", user_key_path)
+    with server.client("new-user") as c:
+        _, stdout, _ = c.exec_command("echo 42")
+        assert codecs.decode(stdout.read().strip(), "utf8") == "42"

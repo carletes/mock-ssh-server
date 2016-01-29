@@ -101,8 +101,11 @@ class Server(object):
         self._thread = None
         self._users = {}
         for uid, private_key_path in users.items():
-            k = paramiko.RSAKey.from_private_key_file(private_key_path)
-            self._users[uid] = (private_key_path, k)
+            self.add_user(uid, private_key_path)
+
+    def add_user(self, uid, private_key_path):
+        k = paramiko.RSAKey.from_private_key_file(private_key_path)
+        self._users[uid] = (private_key_path, k)
 
     def __enter__(self):
         self._socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

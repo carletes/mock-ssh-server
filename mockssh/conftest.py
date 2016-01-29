@@ -1,7 +1,7 @@
 import logging
 import os
 
-from pytest import yield_fixture
+from pytest import fixture, yield_fixture
 
 from mockssh import Server
 
@@ -11,11 +11,17 @@ __all__ = [
 ]
 
 
+SAMPLE_USER_KEY = os.path.join(os.path.dirname(__file__), "sample-user-key")
+
+
+@fixture
+def user_key_path():
+    return SAMPLE_USER_KEY
+
 @yield_fixture(scope="function")
 def server():
-    here = os.path.dirname(__file__)
     users = {
-        "sample-user": os.path.join(here, "sample-user-key"),
+        "sample-user": SAMPLE_USER_KEY,
     }
     with Server(users) as s:
         yield s
