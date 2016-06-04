@@ -41,9 +41,9 @@ def returns_sftp_error(func):
             LOG.debug("Error calling %s(%s, %s): %s",
                       func, args, kwargs, err, exc_info=True)
             errno = err.errno
-            if errno in {EACCES, EDQUOT, EPERM, EROFS}:
+            if errno in (EACCES, EDQUOT, EPERM, EROFS):
                 return paramiko.SFTP_PERMISSION_DENIED
-            if errno in {ENOENT, ENOTDIR}:
+            if errno in (ENOENT, ENOTDIR):
                 return paramiko.SFTP_NO_SUCH_FILE
             return paramiko.SFTP_FAILURE
         except Exception as err:

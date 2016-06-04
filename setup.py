@@ -21,7 +21,7 @@ def read_long_description():
 
 setup(
     name="mock-ssh-server",
-    version="0.2.0",
+    version="0.2.1",
     description="Mock SSH server for testing purposes",
     long_description=read_long_description(),
     url="https://github.com/carletes/mock-ssh-server",
@@ -35,6 +35,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Testing",
+        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
     ],

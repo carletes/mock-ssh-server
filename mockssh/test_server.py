@@ -28,7 +28,14 @@ def test_ssh_failed_commands(server):
 def test_invalid_user(server):
     with raises(KeyError) as exc:
         server.client("unknown-user")
-    assert exc.value.args[0] == "unknown-user"
+
+    user = exc.value.args[0]
+
+    # py2.6
+    if isinstance(user, tuple):
+        user = user[0]
+
+    assert user == "unknown-user"
 
 
 def test_add_user(server, user_key_path):

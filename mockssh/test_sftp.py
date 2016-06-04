@@ -6,9 +6,10 @@ from pytest import fixture, raises
 
 def files_equal(fname1, fname2):
     if os.stat(fname1).st_size == os.stat(fname2).st_size:
-        with open(fname1, "rb") as f1, open(fname2, "rb") as f2:
-            if f1.read() == f2.read():
-                return True
+        with open(fname1, "rb") as f1:
+            with open(fname2, "rb") as f2:
+                if f1.read() == f2.read():
+                    return True
 
 def test_sftp_session(server):
     for uid in server.users:
