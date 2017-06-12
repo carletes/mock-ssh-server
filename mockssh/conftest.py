@@ -33,3 +33,9 @@ def server(tmpdir):
 
 logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s %(threadName)s %(name)s %(message)s")
+
+
+@yield_fixture(scope='function')
+def client(server):
+    with server.client('sample-user') as c:
+        yield c

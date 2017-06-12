@@ -52,3 +52,13 @@ def test_sftp_unsupported_calls(server, unsupported_call):
             with raises(IOError) as exc:
                 getattr(sftp, meth)(*args)
             assert str(exc.value) == "Operation unsupported"
+
+
+def test_sftp_list_files(server, client):
+    sftp = client.open_sftp()
+    assert sftp.listdir('.') == []
+
+    with open(os.path.join(server.root, 'dummy.txt'), 'w') as fh:
+        fh.write('dummy-content')
+
+    assert sftp.listdir('.') == ['dummy.txt']
