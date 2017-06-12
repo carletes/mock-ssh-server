@@ -7,5 +7,8 @@ install:
 test:
 	py.test
 
+coverage:
+	py.test --cov=mockssh --cov-report=term-missing
+
 lint:
 	flake8 mockssh/

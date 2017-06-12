@@ -1,7 +1,9 @@
 -r requirements.txt
 pytest
+pytest-cov
 pyflakes
 tox
+coverage
 flake8
 flake8-imports
 flake8-blind-except

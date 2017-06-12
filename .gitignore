@@ -1,4 +1,5 @@
 *.py[co]
+.coverage
 .cache/
 .tox/
 *.egg-info/
