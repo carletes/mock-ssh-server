@@ -30,8 +30,6 @@ def test_sftp_session(server):
 
 @fixture(params=[("chmod", "/", 0o755),
                  ("chown", "/", 0, 0),
-                 ("listdir", "/"),
-                 ("listdir_attr", "/"),
                  ("lstat", "/"),
                  ("mkdir", "/tmp/foo"),
                  ("readlink", "/etc"),
@@ -46,7 +44,7 @@ def unsupported_call(request):
     return request.param
 
 
-def _test_sftp_unsupported_calls(server, unsupported_call):
+def test_sftp_unsupported_calls(server, unsupported_call):
     for uid in server.users:
         with server.client(uid) as c:
             meth, args = unsupported_call[0], unsupported_call[1:]
