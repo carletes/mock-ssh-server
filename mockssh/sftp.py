@@ -1,15 +1,14 @@
 import logging
 import os
-
-from errno import EACCES, EDQUOT, EPERM, EROFS, ENOENT, ENOTDIR
+from errno import EACCES, EDQUOT, ENOENT, ENOTDIR, EPERM, EROFS
 
 import paramiko
+from paramiko import SFTPAttributes
 
 
 __all__ = [
     "SFTPServer",
 ]
-
 
 
 class SFTPHandle(paramiko.SFTPHandle):
@@ -29,10 +28,9 @@ class SFTPHandle(paramiko.SFTPHandle):
         return self.file_obj
 
 
-LOG = logging.getLogger(__name__)
-
-
 def returns_sftp_error(func):
+
+    LOG = logging.getLogger(__name__)
 
     def wrapped(*args, **kwargs):
         try:
@@ -108,5 +106,5 @@ class SFTPServer(paramiko.SFTPServer):
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface,
                  *largs, **kwargs):
         kwargs["sftp_si"] = SFTPServerInterface
-        super(SFTPServer, self).__init__(channel, name, server, *largs,
-                                         **kwargs)
+        super(SFTPServer, self).__init__(
+            channel, name, server, *largs, **kwargs)

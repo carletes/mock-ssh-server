@@ -100,13 +100,14 @@ class Server(object):
         self._socket = None
         self._thread = None
         self._root = root
-
         self._users = {}
-        for uid, private_key_path in users.items():
-            self.add_user(uid, private_key_path)
 
-    def add_user(self, uid, private_key_path):
-        k = paramiko.RSAKey.from_private_key_file(private_key_path)
+        users = users or {}
+        for uid, credentials in users.items():
+            self.add_user(uid, credentials['key'], credentials['passphrase'])
+
+    def add_user(self, uid, private_key_path, passphrase=None):
+        k = paramiko.RSAKey.from_private_key_file(private_key_path, passphrase)
         self._users[uid] = (private_key_path, k)
 
     def __enter__(self):
