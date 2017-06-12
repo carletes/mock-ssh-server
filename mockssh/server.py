@@ -34,7 +34,7 @@ class Handler(paramiko.ServerInterface):
         client, _ = client_conn
         self.transport = t = paramiko.Transport(client)
         t.add_server_key(paramiko.RSAKey(filename=SERVER_KEY_PATH))
-        t.set_subsystem_handler("sftp", sftp.SFTPServer)
+        t.set_subsystem_handler("sftp", sftp.SFTPServer, root=server._root)
 
     def run(self):
         self.transport.start_server(server=self)
@@ -96,9 +96,11 @@ class Server(object):
 
     log = logging.getLogger(__name__)
 
-    def __init__(self, users):
+    def __init__(self, users=None, root=None):
         self._socket = None
         self._thread = None
+        self._root = root
+
         self._users = {}
         for uid, private_key_path in users.items():
             self.add_user(uid, private_key_path)
@@ -161,3 +163,7 @@ class Server(object):
     @property
     def users(self):
         return self._users.keys()
+
+    @property
+    def root(self):
+        return self._root

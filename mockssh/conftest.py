@@ -19,11 +19,12 @@ def user_key_path():
     return SAMPLE_USER_KEY
 
 @yield_fixture(scope="function")
-def server():
+def server(tmpdir):
+    root = tmpdir.join('sftp').mkdir().strpath
     users = {
         "sample-user": SAMPLE_USER_KEY,
     }
-    with Server(users) as s:
+    with Server(users, root=root) as s:
         yield s
 
 

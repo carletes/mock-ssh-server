@@ -59,7 +59,23 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
     log = logging.getLogger(__name__)
 
     def __init__(self, server, *largs, **kwargs):
+        self._root = kwargs.pop('root', None)
         super(SFTPServerInterface, self).__init__(server, *largs, **kwargs)
+
+    def _path_join(self, path):
+        return os.path.realpath(
+            os.path.join(self._root, os.path.normpath(path)))
+
+    def list_folder(self, path):
+        path = self._path_join(path)
+        result = []
+        for filename in os.listdir(path):
+            stat_data = os.stat(os.path.join(path, filename))
+            item = SFTPAttributes.from_stat(stat_data)
+            item.filename = filename
+            result.append(item)
+            print(result)
+        return result
 
     def session_started(self):
         pass
