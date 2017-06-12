@@ -5,7 +5,6 @@ from errno import EACCES, EDQUOT, ENOENT, ENOTDIR, EPERM, EROFS
 import paramiko
 from paramiko import SFTPAttributes
 
-
 __all__ = [
     "SFTPServer",
 ]

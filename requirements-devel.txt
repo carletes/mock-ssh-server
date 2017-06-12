@@ -2,3 +2,7 @@
 pytest
 pyflakes
 tox
+flake8
+flake8-imports
+flake8-blind-except
+flake8-debugger

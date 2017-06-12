@@ -5,7 +5,6 @@ from pytest import fixture, yield_fixture
 
 from mockssh import Server
 
-
 __all__ = [
     "server",
 ]

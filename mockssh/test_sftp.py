@@ -10,6 +10,7 @@ def files_equal(fname1, fname2):
             if f1.read() == f2.read():
                 return True
 
+
 def test_sftp_session(server):
     for uid in server.users:
         target_dir = tempfile.mkdtemp()

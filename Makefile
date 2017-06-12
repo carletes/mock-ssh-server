@@ -6,3 +6,6 @@ install:
 
 test:
 	py.test
+
+lint:
+	flake8 mockssh/

@@ -5,14 +5,14 @@ import socket
 import subprocess
 import threading
 
+import paramiko
+
+from mockssh import sftp
+
 try:
     from queue import Queue
 except ImportError:  # Python 2.7
     from Queue import Queue
-
-import paramiko
-
-from mockssh import sftp
 
 
 __all__ = [
