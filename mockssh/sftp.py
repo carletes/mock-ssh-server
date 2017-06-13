@@ -63,6 +63,7 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
         return os.path.realpath(
             os.path.join(self._root, os.path.normpath(path)))
 
+    @returns_sftp_error
     def list_folder(self, path):
         path = self._path_join(path)
         result = []
@@ -71,7 +72,6 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
             item = SFTPAttributes.from_stat(stat_data)
             item.filename = filename
             result.append(item)
-            print(result)
         return result
 
     def session_started(self):
@@ -82,6 +82,7 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
 
     @returns_sftp_error
     def open(self, path, flags, attr):
+        path = self._path_join(path)
         fd = os.open(path, flags)
         self.log.debug("open(%s): fd: %d", path, fd)
         if flags & (os.O_WRONLY | os.O_RDWR):
@@ -96,6 +97,7 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
 
     @returns_sftp_error
     def stat(self, path):
+        path = self._path_join(path)
         st = os.stat(path)
         return paramiko.SFTPAttributes.from_stat(st, path)
 
