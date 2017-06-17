@@ -18,7 +18,7 @@ def user_key_path():
     return SAMPLE_USER_KEY
 
 
-@yield_fixture(scope="function")
+@fixture
 def server(tmpdir):
     root = tmpdir.join('sftp').mkdir().strpath
     users = {
@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s %(threadName)s %(name)s %(message)s")
 
 
-@yield_fixture(scope='function')
+@fixture
 def client(server):
     with server.client('sample-user') as c:
         yield c
