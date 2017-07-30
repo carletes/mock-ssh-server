@@ -50,13 +50,13 @@ def test_multiple_connections5(server):
 def _test_multiple_connections(server):
     # This test will deadlock without ea1e0f80aac7253d2d346732eefd204c6627f4c8
     fd, pkey_path = tempfile.mkstemp()
-    user, private_key = server._users.items()[0]
+    user, private_key = list(server._users.items())[0]
     open(pkey_path, 'w').write(open(private_key[0]).read())
     ssh_command = 'ssh -oStrictHostKeyChecking=no '
     ssh_command += "-i %s -p %s %s@localhost " % (pkey_path, server.port, user)
     ssh_command += 'echo hello'
     p = subprocess.check_output(ssh_command, shell=True)
-    assert p.strip() == 'hello'
+    assert p.decode('utf-8').strip() == 'hello'
 
 
 def test_invalid_user(server):
