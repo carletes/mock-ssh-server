@@ -42,14 +42,15 @@ class Handler(paramiko.ServerInterface):
             channel = self.transport.accept()
             if channel is None:
                 break
-            self.command_queues[channel.get_id()] = Queue()
+            if not channel.chanid in self.command_queues:
+                self.command_queues[channel.chanid] = Queue()
             t = threading.Thread(target=self.handle_client, args=(channel,))
             t.setDaemon(True)
             t.start()
 
     def handle_client(self, channel):
         try:
-            command = self.command_queues[channel.get_id()].get(block=True)
+            command = self.command_queues[channel.chanid].get(block=True)
             self.log.debug("Executing %s", command)
             p = subprocess.Popen(command, shell=True,
                                  stdin=subprocess.PIPE,
