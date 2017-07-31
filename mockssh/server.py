@@ -42,7 +42,7 @@ class Handler(paramiko.ServerInterface):
             channel = self.transport.accept()
             if channel is None:
                 break
-            if not channel.chanid in self.command_queues:
+            if channel.chanid not in self.command_queues:
                 self.command_queues[channel.chanid] = Queue()
             t = threading.Thread(target=self.handle_client, args=(channel,))
             t.setDaemon(True)

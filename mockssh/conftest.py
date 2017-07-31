@@ -18,6 +18,7 @@ SAMPLE_USER_KEY = os.path.join(os.path.dirname(__file__), "sample-user-key")
 def user_key_path():
     return SAMPLE_USER_KEY
 
+
 @yield_fixture(scope="function")
 def server():
     users = {

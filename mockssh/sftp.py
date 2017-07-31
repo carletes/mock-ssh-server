@@ -11,7 +11,6 @@ __all__ = [
 ]
 
 
-
 class SFTPHandle(paramiko.SFTPHandle):
 
     log = logging.getLogger(__name__)
@@ -91,7 +90,7 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
         """Looks up folder contents of `path.`"""
         # Inspired by https://github.com/rspivak/sftpserver/blob/0.3/src/sftpserver/stub_sftp.py#L70
         try:
-            folder_contents = [ ]
+            folder_contents = []
             for f in os.listdir(path):
                 attr = paramiko.SFTPAttributes.from_stat(os.stat(os.path.join(path, f)))
                 attr.filename = f
