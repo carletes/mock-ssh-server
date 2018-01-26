@@ -34,6 +34,15 @@ def test_sftp_session(server):
             with raises(IOError):
                 sftp.listdir("/123_no_dir")
 
+            sftp.remove(os.path.join(target_dir, "foo"))
+            dir_contents = sftp.listdir(target_dir)
+            assert len(dir_contents) == 1
+            assert "foo" not in dir_contents
+
+            sftp.unlink(os.path.join(target_dir, "bar"))
+            dir_contents = sftp.listdir(target_dir)
+            assert len(dir_contents) == 0
+
 
 @fixture(params=[("chmod", "/", 0o755),
                  ("chown", "/", 0, 0),
@@ -41,12 +50,10 @@ def test_sftp_session(server):
                  ("lstat", "/"),
                  ("mkdir", "/tmp/foo"),
                  ("readlink", "/etc"),
-                 ("remove", "/etc/passwd"),
                  ("rename", "/tmp/foo", "/tmp/bar"),
                  ("rmdir", "/"),
                  ("symlink", "/tmp/foo", "/tmp/bar"),
                  ("truncate", "/etc/passwd", 0),
-                 ("unlink", "/etc/passwd"),
                  ("utime", "/", (0, 0))])
 def unsupported_call(request):
     return request.param

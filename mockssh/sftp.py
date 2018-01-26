@@ -86,6 +86,15 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
         return paramiko.SFTPAttributes.from_stat(st, path)
 
     @returns_sftp_error
+    def remove(self, path):
+        try:
+            os.remove(path)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
     def list_folder(self, path):
         """Looks up folder contents of `path.`"""
         # Inspired by https://github.com/rspivak/sftpserver/blob/0.3/src/sftpserver/stub_sftp.py#L70
