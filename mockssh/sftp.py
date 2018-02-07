@@ -95,6 +95,50 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OK
 
     @returns_sftp_error
+    def mkdir(self, path, attrs):
+        mode = getattr(attrs, 'st_mode', 0o777)
+        try:
+            os.mkdir(path, mode)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
+    def rmdir(self, path):
+        try:
+            os.rmdir(path)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
+    def chattr(self, path, attrs):
+        if attrs.st_mode is not None:
+            try:
+                os.chmod(path, attrs.st_mode)
+            except OSError as e:
+                return SFTPServer.convert_errno(e.errno)
+
+        if attrs.st_uid is not None:
+            try:
+                os.chown(path, attrs.st_uid, attrs.st_gid)
+            except OSError as e:
+                return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
+    def rename(self, src, dst):
+        try:
+            os.rename(src, dst)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
     def list_folder(self, path):
         """Looks up folder contents of `path.`"""
         # Inspired by https://github.com/rspivak/sftpserver/blob/0.3/src/sftpserver/stub_sftp.py#L70
