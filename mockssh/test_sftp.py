@@ -1,5 +1,5 @@
 import os
-import tempfile
+import stat
 
 from pytest import fixture, raises
 
@@ -11,47 +11,87 @@ def files_equal(fname1, fname2):
                 return True
 
 
-def test_sftp_session(server):
-    for uid in server.users:
-        target_dir = tempfile.mkdtemp()
-        target_fname = os.path.join(target_dir, "foo")
-        assert not os.access(target_fname, os.F_OK)
-
-        with server.client(uid) as c:
-            sftp = c.open_sftp()
-            sftp.put(__file__, target_fname, confirm=True)
-            assert files_equal(target_fname, __file__)
-
-            second_copy = os.path.join(target_dir, "bar")
-            assert not os.access(second_copy, os.F_OK)
-            sftp.get(target_fname, second_copy)
-            assert files_equal(target_fname, second_copy)
-
-            dir_contents = sftp.listdir(target_dir)
-            assert len(dir_contents) == 2
-            assert "foo" in dir_contents
-            assert "bar" in dir_contents
-            with raises(IOError):
-                sftp.listdir("/123_no_dir")
-
-            sftp.remove(os.path.join(target_dir, "foo"))
-            dir_contents = sftp.listdir(target_dir)
-            assert len(dir_contents) == 1
-            assert "foo" not in dir_contents
-
-            sftp.unlink(os.path.join(target_dir, "bar"))
-            dir_contents = sftp.listdir(target_dir)
-            assert len(dir_contents) == 0
+def test_put(sftp_client, tmp_dir):
+    target_fname = os.path.join(tmp_dir, "foo")
+    sftp_client.put(__file__, target_fname, confirm=True)
+    assert files_equal(target_fname, __file__)
 
 
-@fixture(params=[("chmod", "/", 0o755),
-                 ("chown", "/", 0, 0),
-                 ("listdir_attr", "/"),
+def test_get(sftp_client, tmp_dir):
+    target_fname = os.path.join(tmp_dir, "foo")
+    sftp_client.get(__file__, target_fname)
+    assert files_equal(target_fname, __file__)
+
+
+def test_listdir(sftp_client, tmp_dir):
+    open(os.path.join(tmp_dir, "foo"), "w").write("foo")
+    open(os.path.join(tmp_dir, "bar"), "w").write("bar")
+
+    dir_contents = sftp_client.listdir(tmp_dir)
+    assert sorted(dir_contents) == ["bar", "foo"]
+
+    with raises(IOError):
+        sftp_client.listdir("/123_no_dir")
+
+
+def test_remove(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "x")
+    open(test_file, "w").write("X")
+    sftp_client.remove(test_file)
+    assert not os.listdir(tmp_dir)
+
+
+def test_unlink(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "x")
+    open(test_file, "w").write("X")
+    sftp_client.unlink(test_file)
+    assert not os.listdir(tmp_dir)
+
+
+def test_mkdir(sftp_client, tmp_dir):
+    target_dir = os.path.join(tmp_dir, "foo")
+    sftp_client.mkdir(target_dir)
+    assert os.path.exists(target_dir)
+    assert os.path.isdir(target_dir)
+
+
+def test_rmdir(sftp_client, tmp_dir):
+    target_dir = os.path.join(tmp_dir, "foo")
+    os.makedirs(target_dir)
+    sftp_client.rmdir(target_dir)
+    assert not os.path.exists(target_dir)
+    assert not os.path.isdir(target_dir)
+
+
+def test_chmod(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "foo")
+    open(test_file, "w").write("X")
+    sftp_client.chmod(test_file, 0o600)
+    st = os.stat(test_file)
+    check_bits = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
+    assert st.st_mode & check_bits == 0o600
+
+
+def test_chown(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "foo")
+    open(test_file, "w").write("X")
+    # test process probably can't change file uids
+    # so just test if no exception occurs
+    sftp_client.chown(test_file, os.getuid(), os.getgid())
+
+
+def test_rename(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "foo")
+    open(test_file, "w").write("X")
+    renamed_test_file = os.path.join(tmp_dir, "bar")
+    sftp_client.rename(test_file, renamed_test_file)
+    assert os.path.exists(renamed_test_file)
+    assert not os.path.exists(test_file)
+
+
+@fixture(params=[("listdir_attr", "/"),
                  ("lstat", "/"),
-                 ("mkdir", "/tmp/foo"),
                  ("readlink", "/etc"),
-                 ("rename", "/tmp/foo", "/tmp/bar"),
-                 ("rmdir", "/"),
                  ("symlink", "/tmp/foo", "/tmp/bar"),
                  ("truncate", "/etc/passwd", 0),
                  ("utime", "/", (0, 0))])

@@ -1,4 +1,6 @@
+import tempfile
 import logging
+import shutil
 import os
 
 from pytest import fixture, yield_fixture
@@ -26,6 +28,26 @@ def server():
     }
     with Server(users) as s:
         yield s
+
+
+@yield_fixture
+def sftp_client(server):
+    uid = tuple(server.users)[0]
+    c = server.client(uid)
+    yield c.open_sftp()
+
+
+@yield_fixture
+def tmp_dir():
+    if hasattr(tempfile, "TemporaryDirectory"):
+        # python 3
+        with tempfile.TemporaryDirectory() as td:
+            yield td
+    else:
+        # python 2
+        td = tempfile.mkdtemp()
+        yield td
+        shutil.rmtree(td)
 
 
 logging.basicConfig(level=logging.DEBUG,
