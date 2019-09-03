@@ -23,6 +23,17 @@ def test_get(sftp_client, tmp_dir):
     assert files_equal(target_fname, __file__)
 
 
+def test_lstat(sftp_client, tmp_dir):
+    foo = os.path.join(tmp_dir, "foo")
+    bar = os.path.join(tmp_dir, "bar")
+
+    open(foo, "w").write("foo")
+    os.symlink(foo, bar)
+
+    assert sftp_client.lstat(bar).st_size == 20
+    assert sftp_client.stat(bar).st_size == 3
+
+
 def test_listdir(sftp_client, tmp_dir):
     open(os.path.join(tmp_dir, "foo"), "w").write("foo")
     open(os.path.join(tmp_dir, "bar"), "w").write("bar")
@@ -90,7 +101,6 @@ def test_rename(sftp_client, tmp_dir):
 
 
 @fixture(params=[("listdir_attr", "/"),
-                 ("lstat", "/"),
                  ("readlink", "/etc"),
                  ("symlink", "/tmp/foo", "/tmp/bar"),
                  ("truncate", "/etc/passwd", 0),
