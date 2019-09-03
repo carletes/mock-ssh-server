@@ -39,8 +39,9 @@ def test_lstat(sftp_client, tmp_dir):
     open(foo, "w").write("foo")
     os.symlink(foo, bar)
 
-    assert sftp_client.lstat(bar).st_size == 20
-    assert sftp_client.stat(bar).st_size == 3
+    stat = sftp_client.stat(bar)
+    lstat = sftp_client.lstat(bar)
+    assert stat.st_size != lstat.st_size
 
 
 def test_listdir(sftp_client, tmp_dir):
