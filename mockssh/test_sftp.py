@@ -112,7 +112,6 @@ def test_rename(sftp_client, tmp_dir):
 
 @fixture(params=[("listdir_attr", "/"),
                  ("readlink", "/etc"),
-                 ("symlink", "/tmp/foo", "/tmp/bar"),
                  ("truncate", "/etc/passwd", 0),
                  ("utime", "/", (0, 0))])
 def unsupported_call(request):
