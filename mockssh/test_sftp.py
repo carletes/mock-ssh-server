@@ -23,6 +23,15 @@ def test_get(sftp_client, tmp_dir):
     assert files_equal(target_fname, __file__)
 
 
+def test_symlink(sftp_client, tmp_dir):
+    foo = os.path.join(tmp_dir, "foo")
+    bar = os.path.join(tmp_dir, "bar")
+
+    open(foo, "w").write("foo")
+    sftp_client.symlink(foo, bar)
+    assert os.path.islink(bar)
+
+
 def test_lstat(sftp_client, tmp_dir):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
