@@ -92,7 +92,11 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
 
     @returns_sftp_error
     def symlink(self, src, dest):
-        os.symlink(src, dest)
+        try:
+            os.symlink(src, dest)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
         return paramiko.SFTP_OK
 
     @returns_sftp_error
