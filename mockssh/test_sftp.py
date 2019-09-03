@@ -23,6 +23,27 @@ def test_get(sftp_client, tmp_dir):
     assert files_equal(target_fname, __file__)
 
 
+def test_symlink(sftp_client, tmp_dir):
+    foo = os.path.join(tmp_dir, "foo")
+    bar = os.path.join(tmp_dir, "bar")
+
+    open(foo, "w").write("foo")
+    sftp_client.symlink(foo, bar)
+    assert os.path.islink(bar)
+
+
+def test_lstat(sftp_client, tmp_dir):
+    foo = os.path.join(tmp_dir, "foo")
+    bar = os.path.join(tmp_dir, "bar")
+
+    open(foo, "w").write("foo")
+    os.symlink(foo, bar)
+
+    stat = sftp_client.stat(bar)
+    lstat = sftp_client.lstat(bar)
+    assert stat.st_size != lstat.st_size
+
+
 def test_listdir(sftp_client, tmp_dir):
     open(os.path.join(tmp_dir, "foo"), "w").write("foo")
     open(os.path.join(tmp_dir, "bar"), "w").write("bar")
@@ -90,9 +111,7 @@ def test_rename(sftp_client, tmp_dir):
 
 
 @fixture(params=[("listdir_attr", "/"),
-                 ("lstat", "/"),
                  ("readlink", "/etc"),
-                 ("symlink", "/tmp/foo", "/tmp/bar"),
                  ("truncate", "/etc/passwd", 0),
                  ("utime", "/", (0, 0))])
 def unsupported_call(request):

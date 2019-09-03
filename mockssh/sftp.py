@@ -86,6 +86,20 @@ class SFTPServerInterface(paramiko.SFTPServerInterface):
         return paramiko.SFTPAttributes.from_stat(st, path)
 
     @returns_sftp_error
+    def lstat(self, path):
+        st = os.lstat(path)
+        return paramiko.SFTPAttributes.from_stat(st, path)
+
+    @returns_sftp_error
+    def symlink(self, src, dest):
+        try:
+            os.symlink(src, dest)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+
+        return paramiko.SFTP_OK
+
+    @returns_sftp_error
     def remove(self, path):
         try:
             os.remove(path)
