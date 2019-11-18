@@ -14,17 +14,14 @@ import paramiko
 
 from mockssh import sftp
 
-
 __all__ = [
     "Server",
 ]
-
 
 SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), "server-key")
 
 
 class Handler(paramiko.ServerInterface):
-
     log = logging.getLogger(__name__)
 
     def __init__(self, server, client_conn):
@@ -92,7 +89,6 @@ class Handler(paramiko.ServerInterface):
 
 
 class Server(object):
-
     host = "127.0.0.1"
 
     log = logging.getLogger(__name__)
@@ -104,9 +100,19 @@ class Server(object):
         for uid, private_key_path in users.items():
             self.add_user(uid, private_key_path)
 
-    def add_user(self, uid, private_key_path):
-        k = paramiko.RSAKey.from_private_key_file(private_key_path)
-        self._users[uid] = (private_key_path, k)
+    def add_user(self, uid, private_key_path, keytype="ssh-rsa"):
+        if keytype == "ssh-rsa":
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+        elif keytype == "ssh-dss":
+            key = paramiko.DSSKey.from_private_key_file(private_key_path)
+        elif keytype in paramiko.ECDSAKey.supported_key_format_identifiers():
+            key = paramiko.ECDSAKey.from_private_key_file(private_key_path)
+        elif keytype == "ssh-ed25519":
+            key = paramiko.Ed25519Key.from_private_key_file(private_key_path)
+        else:
+            raise Exception("Unable to handle key of type {}".format(keytype))
+
+        self._users[uid] = (private_key_path, key)
 
     def __enter__(self):
         self._socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
