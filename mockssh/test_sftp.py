@@ -101,6 +101,15 @@ def test_chown(sftp_client, tmp_dir):
     sftp_client.chown(test_file, os.getuid(), os.getgid())
 
 
+def test_handle_stat(sftp_client, tmp_dir):
+    test_file = os.path.join(tmp_dir, "foo")
+    open(test_file, "w").write("X")
+
+    handle = sftp_client.open(test_file)
+    # only test if no exception occurs
+    handle.stat()
+
+
 def test_rename(sftp_client, tmp_dir):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
