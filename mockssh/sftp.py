@@ -28,7 +28,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         return self.file_obj
 
     def stat(self):
-        st = os.fstat(self.file_obj.name)
+        st = os.fstat(self.file_obj.fileno())
         return paramiko.SFTPAttributes.from_stat(st)
 
 
