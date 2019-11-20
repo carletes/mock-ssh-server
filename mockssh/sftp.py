@@ -27,6 +27,10 @@ class SFTPHandle(paramiko.SFTPHandle):
     def writefile(self):
         return self.file_obj
 
+    def stat(self):
+        st = os.fstat(self.file_obj.name)
+        return paramiko.SFTPAttributes.from_stat(st)
+
 
 LOG = logging.getLogger(__name__)
 
