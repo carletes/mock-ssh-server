@@ -21,7 +21,7 @@ def read_long_description():
 
 setup(
     name="mock-ssh-server",
-    version="0.8.0",
+    version="0.8.1",
     description="Mock SSH server for testing purposes",
     long_description=read_long_description(),
     url="https://github.com/carletes/mock-ssh-server",
@@ -38,20 +38,11 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
     ],
-
-    package_dir={
-        "mockssh": "mockssh",
-    },
+    package_dir={"mockssh": "mockssh",},
     packages=find_packages(),
     package_data={
-        "mockssh": [
-            "sample-user-key",
-            "sample-user-key.pub",
-            "server-key",
-            "server-key.pub",
-        ]
+        "mockssh": ["sample-user-key", "sample-user-key.pub", "server-key", "server-key.pub",]
     },
     install_requires=read_requirements(),
-
     zip_safe=False,
 )
