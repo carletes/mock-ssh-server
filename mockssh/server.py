@@ -62,7 +62,10 @@ class Handler(paramiko.ServerInterface):
             self.log.error("Error handling client (channel: %s)", channel,
                            exc_info=True)
         finally:
-            channel.close()
+            try:
+                channel.close()
+            except EOFError:
+                self.log.debug("Tried to close already closed channel")
 
     def check_auth_publickey(self, username, key):
         try:
