@@ -1,7 +1,6 @@
 import errno
 import logging
 import os
-import select
 import socket
 import subprocess
 import threading
@@ -10,6 +9,12 @@ try:
     from queue import Queue
 except ImportError:  # Python 2.7
     from Queue import Queue
+
+try:
+    import selectors
+except ImportError:  # Python 2.7
+    import selectors2 as selectors
+
 
 import paramiko
 
@@ -129,10 +134,12 @@ class Server(object):
 
     def _run(self):
         sock = self._socket
+        selector = selectors.DefaultSelector()
         while sock.fileno() > 0:
             self.log.debug("Waiting for incoming connections ...")
-            rlist, _, _ = select.select([sock], [], [], 1.0)
-            if rlist:
+            selector.register(sock, selectors.EVENT_READ)
+            events = selector.select(timeout=1.0)
+            if events:
                 try:
                     conn, addr = sock.accept()
                 except OSError as ex:
