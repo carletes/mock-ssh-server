@@ -135,9 +135,9 @@ class Server(object):
     def _run(self):
         sock = self._socket
         selector = selectors.DefaultSelector()
+        selector.register(sock, selectors.EVENT_READ)
         while sock.fileno() > 0:
             self.log.debug("Waiting for incoming connections ...")
-            selector.register(sock, selectors.EVENT_READ)
             events = selector.select(timeout=1.0)
             if events:
                 try:
