@@ -41,7 +41,12 @@ setup(
     package_dir={"mockssh": "mockssh",},
     packages=find_packages(),
     package_data={
-        "mockssh": ["sample-user-key", "sample-user-key.pub", "server-key", "server-key.pub",]
+        "mockssh": [
+            "sample-user-key",
+            "sample-user-key.pub",
+            "server-key",
+            "server-key.pub",
+        ]
     },
     install_requires=read_requirements(),
     zip_safe=False,
