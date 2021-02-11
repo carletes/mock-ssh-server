@@ -21,7 +21,7 @@ As a `py.test`_ fixture::
     @yield_fixture()
     def server():
         users = {
-            "sample-user": "/path/to/user-private-key,
+            "sample-user": "/path/to/user-private-key",
         }
         with mockssh.Server(users) as s:
             yield s
