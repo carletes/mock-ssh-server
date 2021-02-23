@@ -99,6 +99,7 @@ class Handler(paramiko.ServerInterface):
 
 class Server(object):
     host = "127.0.0.1"
+    handler_cls = Handler
 
     log = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class Server(object):
                         break
                     raise
                 self.log.debug("... got connection %s from %s", conn, addr)
-                handler = Handler(self, (conn, addr))
+                handler = self.handler_cls(self, (conn, addr))
                 t = threading.Thread(target=handler.run)
                 t.setDaemon(True)
                 t.start()
