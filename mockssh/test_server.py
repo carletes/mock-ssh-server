@@ -3,7 +3,10 @@ import platform
 import subprocess
 import tempfile
 
+import paramiko
 from pytest import raises
+
+import mockssh
 
 
 def test_ssh_session(server):
@@ -73,3 +76,17 @@ def test_add_user(server, user_key_path):
     with server.client("new-user") as c:
         _, stdout, _ = c.exec_command("echo 42")
         assert codecs.decode(stdout.read().strip(), "utf8") == "42"
+
+
+def test_overwrite_handler(server, monkeypatch):
+    class MyHandler(mockssh.server.Handler):
+        def check_auth_password(self, username, password):
+            if username == "foo" and password == "bar":
+                return paramiko.AUTH_SUCCESSFUL
+            return paramiko.AUTH_FAILED
+    monkeypatch.setattr(server, 'handler_cls', MyHandler)
+    with paramiko.SSHClient() as client:
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        assert client.connect(server.host, server.port, "foo", "bar") is None
+        with raises(paramiko.ssh_exception.AuthenticationException):
+            client.connect(server.host, server.port, "fooooo", "barrrr")
