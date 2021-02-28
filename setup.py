@@ -21,7 +21,7 @@ def read_long_description():
 
 setup(
     name="mock-ssh-server",
-    version="0.8.2",
+    version="0.9.0",
     description="Mock SSH server for testing purposes",
     long_description=read_long_description(),
     url="https://github.com/carletes/mock-ssh-server",
