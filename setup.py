@@ -37,8 +37,14 @@ setup(
         "Topic :: Software Development :: Testing",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
-    package_dir={"mockssh": "mockssh",},
+    package_dir={
+        "mockssh": "mockssh",
+    },
     packages=find_packages(),
     package_data={
         "mockssh": [
