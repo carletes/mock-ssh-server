@@ -4,7 +4,8 @@ import os
 import socket
 import subprocess
 import threading
-
+import time
+import fcntl
 try:
     from queue import Queue
 except ImportError:  # Python 2.7
@@ -59,9 +60,26 @@ class Handler(paramiko.ServerInterface):
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            channel.sendall(stdout)
-            channel.sendall_stderr(stderr)
+
+            # Configure descriptors as non blocking
+            fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+
+            while p.poll() is None:
+                r_ready, w_ready, x_ready = select.select(
+                    [channel, p.stdout, p.stderr], [p.stdin], []
+                )
+
+                if channel.recv_ready() and p.stdin in w_ready:
+                    p.stdin.write(recv_all(channel))
+                    p.stdin.flush()
+
+                if p.stdout in r_ready:
+                    channel.sendall(read_nonblock(p.stdout))
+
+                if p.stderr in r_ready:
+                    channel.sendall_stderr(read_nonblock(p.stderr))
+
             channel.send_exit_status(p.returncode)
         except Exception:
             self.log.error("Error handling client (channel: %s)", channel,
@@ -185,3 +203,15 @@ class Server(object):
     @property
     def users(self):
         return self._users.keys()
+
+
+def read_nonblock(f):
+    while True:
+        try:
+            return f.read()
+        except IOError:
+            time.sleep(.1)
+
+
+def recv_all(channel):
+    return b''.join(iter(lambda: channel.recv(1024), ''))
