@@ -3,7 +3,7 @@ import logging
 import shutil
 import os
 
-from pytest import fixture, yield_fixture
+from pytest import fixture
 
 from mockssh import Server
 
@@ -21,7 +21,7 @@ def user_key_path():
     return SAMPLE_USER_KEY
 
 
-@yield_fixture(scope="function")
+@fixture(scope="function")
 def server():
     users = {
         "sample-user": SAMPLE_USER_KEY,
@@ -30,14 +30,14 @@ def server():
         yield s
 
 
-@yield_fixture
+@fixture
 def sftp_client(server):
     uid = tuple(server.users)[0]
     c = server.client(uid)
     yield c.open_sftp()
 
 
-@yield_fixture
+@fixture
 def tmp_dir():
     if hasattr(tempfile, "TemporaryDirectory"):
         # python 3
