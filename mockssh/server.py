@@ -5,6 +5,8 @@ import socket
 import subprocess
 import threading
 
+from mockssh.streaming import StreamTransfer
+
 try:
     from queue import Queue
 except ImportError:  # Python 2.7
@@ -14,7 +16,6 @@ try:
     import selectors
 except ImportError:  # Python 2.7
     import selectors2 as selectors
-
 
 import paramiko
 
@@ -59,9 +60,7 @@ class Handler(paramiko.ServerInterface):
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            channel.sendall(stdout)
-            channel.sendall_stderr(stderr)
+            StreamTransfer(channel, p).run()
             channel.send_exit_status(p.returncode)
         except Exception:
             self.log.error("Error handling client (channel: %s)", channel,
