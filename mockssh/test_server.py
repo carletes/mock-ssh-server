@@ -11,6 +11,8 @@ import mockssh
 
 def test_ssh_session(server):
     for uid in server.users:
+        print('Testing multiple connections with user', uid)
+        print('=================================================')
         with server.client(uid) as c:
             _, stdout, _ = c.exec_command("ls /")
             assert "etc" in (codecs.decode(bit, "utf8")
