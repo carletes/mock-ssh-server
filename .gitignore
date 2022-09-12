@@ -1,5 +1,6 @@
 *.py[co]
 .cache/
+.direnv/
 .tox/
 *.egg-info/
 /build/

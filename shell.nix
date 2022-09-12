@@ -1,12 +1,12 @@
 let
   sources = import ./.nix/sources.nix;
-  pkgs = import sources.nixpkgs {};
+  pkgs = import sources.nixpkgs { };
 
   # Drive `tox` using latest Python version.
   toxEnv = pkgs.python39.withPackages (ps: with ps; [
-      tox
-      setuptools
-    ]);
+    tox
+    setuptools
+  ]);
 in
 pkgs.mkShell {
   buildInputs = [
