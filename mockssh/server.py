@@ -56,12 +56,12 @@ class Handler(paramiko.ServerInterface):
         try:
             command = self.command_queues[channel.chanid].get(block=True)
             self.log.debug("Executing %s", command)
-            p = subprocess.Popen(command, shell=True,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
-            StreamTransfer(channel, p).run()
-            channel.send_exit_status(p.returncode)
+            with subprocess.Popen(command, shell=True,
+                                  stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE) as p:
+                StreamTransfer(channel, p).run()
+                channel.send_exit_status(p.returncode)
         except Exception:
             self.log.error("Error handling client (channel: %s)", channel,
                            exc_info=True)
