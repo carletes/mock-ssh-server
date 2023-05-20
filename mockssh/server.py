@@ -49,7 +49,7 @@ class Handler(paramiko.ServerInterface):
             if channel.chanid not in self.command_queues:
                 self.command_queues[channel.chanid] = Queue()
             t = threading.Thread(target=self.handle_client, args=(channel,))
-            t.setDaemon(True)
+            t.daemon = True
             t.start()
 
     def handle_client(self, channel):
@@ -128,7 +128,7 @@ class Server(object):
         s.bind((self.host, 0))
         s.listen(5)
         self._thread = t = threading.Thread(target=self._run)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
         return self
 
@@ -149,7 +149,7 @@ class Server(object):
                 self.log.debug("... got connection %s from %s", conn, addr)
                 handler = self.handler_cls(self, (conn, addr))
                 t = threading.Thread(target=handler.run)
-                t.setDaemon(True)
+                t.daemon = True
                 t.start()
 
     def __exit__(self, *exc_info):
