@@ -1,7 +1,4 @@
-try:
-    import selectors
-except ImportError:  # Python 2.7
-    import selectors2 as selectors
+import selectors
 
 
 class Stream:
