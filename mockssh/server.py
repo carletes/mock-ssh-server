@@ -7,15 +7,9 @@ import threading
 
 from mockssh.streaming import StreamTransfer
 
-try:
-    from queue import Queue
-except ImportError:  # Python 2.7
-    from Queue import Queue
+from queue import Queue
 
-try:
-    import selectors
-except ImportError:  # Python 2.7
-    import selectors2 as selectors
+import selectors
 
 import paramiko
 
