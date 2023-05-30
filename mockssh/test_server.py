@@ -11,8 +11,14 @@ from _pytest.monkeypatch import MonkeyPatch
 from mockssh.server import Server
 
 
-@mark.fails_on_windows
 def test_ssh_session(server: Server):
+    for uid in server.users:
+        with server.client(uid) as c:
+            assert isinstance(c, paramiko.SSHClient)
+
+
+@mark.fails_on_windows
+def test_ssh_exec_command(server: Server):
     for uid in server.users:
         with server.client(uid) as c:
             _, stdout, _ = c.exec_command("ls /")
