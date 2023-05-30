@@ -11,6 +11,8 @@ import paramiko
 
 from mockssh import sftp
 from mockssh.streaming import StreamTransfer
+from paramiko.client import SSHClient
+from typing import Dict
 
 __all__ = [
     "Server",
@@ -93,14 +95,14 @@ class Server(object):
 
     log = logging.getLogger(__name__)
 
-    def __init__(self, users):
+    def __init__(self, users: Dict[str, str]) -> None:
         self._socket = None
         self._thread = None
         self._users = {}
         for uid, private_key_path in users.items():
             self.add_user(uid, private_key_path)
 
-    def add_user(self, uid, private_key_path, keytype="ssh-rsa"):
+    def add_user(self, uid: str, private_key_path: str, keytype: str="ssh-rsa") -> None:
         if keytype == "ssh-rsa":
             key = paramiko.RSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-dss":
@@ -114,7 +116,7 @@ class Server(object):
 
         self._users[uid] = (private_key_path, key)
 
-    def __enter__(self):
+    def __enter__(self) -> "Server":
         self._socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, 0))
         s.listen(5)
@@ -143,7 +145,7 @@ class Server(object):
                 t.daemon = True
                 t.start()
 
-    def __exit__(self, *exc_info):
+    def __exit__(self, *exc_info) -> None:
         try:
             self._socket.shutdown(socket.SHUT_RDWR)
             self._socket.close()
@@ -152,7 +154,7 @@ class Server(object):
         self._socket = None
         self._thread = None
 
-    def client(self, uid):
+    def client(self, uid: str) -> SSHClient:
         private_key_path, _ = self._users[uid]
         c = paramiko.SSHClient()
         host_keys = c.get_host_keys()
@@ -169,7 +171,7 @@ class Server(object):
         return c
 
     @property
-    def port(self):
+    def port(self) -> int:
         return self._socket.getsockname()[1]
 
     @property

@@ -3,6 +3,7 @@ import os
 from errno import EACCES, EDQUOT, ENOENT, ENOTDIR, EPERM, EROFS
 
 import paramiko
+from typing import Callable
 
 __all__ = [
     "SFTPServer",
@@ -33,7 +34,7 @@ class SFTPHandle(paramiko.SFTPHandle):
 LOG = logging.getLogger(__name__)
 
 
-def returns_sftp_error(func):
+def returns_sftp_error(func: Callable) -> Callable:
 
     def wrapped(*args, **kwargs):
         try:
