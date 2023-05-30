@@ -4,4 +4,5 @@
 *.egg-info/
 /build/
 /dist/
+.wt/
 .venv/
