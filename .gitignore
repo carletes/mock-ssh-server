@@ -6,3 +6,4 @@
 /dist/
 .wt/
 .venv/
+.vscode/settings.json
