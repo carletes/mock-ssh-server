@@ -1,5 +1,7 @@
 import random
 import string
+
+from pytest import mark
 from mockssh.server import Server
 
 
@@ -23,13 +25,16 @@ def streaming_test(server: Server, command: str, tested_fd: int, number_of_input
             assert channel_output == channel_input
 
 
+@mark.fails_on_windows
 def test_stdin_to_stdout(server: Server):
     return streaming_test(server, "cat", 1)
 
 
+@mark.fails_on_windows
 def test_stdin_to_stderr(server: Server):
     streaming_test(server, "cat 1>&2", 2)
 
 
+@mark.fails_on_windows
 def test_streaming_output(server: Server):
     streaming_test(server, "cat", 1, 100)
