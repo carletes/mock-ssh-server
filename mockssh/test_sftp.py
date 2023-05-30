@@ -12,19 +12,19 @@ def files_equal(fname1: str, fname2: str) -> bool:
                 return True
 
 
-def test_put(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_put(sftp_client: SFTPClient, tmp_dir: str):
     target_fname = os.path.join(tmp_dir, "foo")
     sftp_client.put(__file__, target_fname, confirm=True)
     assert files_equal(target_fname, __file__)
 
 
-def test_get(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_get(sftp_client: SFTPClient, tmp_dir: str):
     target_fname = os.path.join(tmp_dir, "foo")
     sftp_client.get(__file__, target_fname)
     assert files_equal(target_fname, __file__)
 
 
-def test_symlink(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_symlink(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
 
@@ -33,7 +33,7 @@ def test_symlink(sftp_client: SFTPClient, tmp_dir: str) -> None:
     assert os.path.islink(bar)
 
 
-def test_lstat(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_lstat(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
 
@@ -45,7 +45,7 @@ def test_lstat(sftp_client: SFTPClient, tmp_dir: str) -> None:
     assert stat.st_size != lstat.st_size
 
 
-def test_listdir(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_listdir(sftp_client: SFTPClient, tmp_dir: str):
     open(os.path.join(tmp_dir, "foo"), "w").write("foo")
     open(os.path.join(tmp_dir, "bar"), "w").write("bar")
 
@@ -56,28 +56,28 @@ def test_listdir(sftp_client: SFTPClient, tmp_dir: str) -> None:
         sftp_client.listdir("/123_no_dir")
 
 
-def test_remove(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_remove(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "x")
     open(test_file, "w").write("X")
     sftp_client.remove(test_file)
     assert not os.listdir(tmp_dir)
 
 
-def test_unlink(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_unlink(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "x")
     open(test_file, "w").write("X")
     sftp_client.unlink(test_file)
     assert not os.listdir(tmp_dir)
 
 
-def test_mkdir(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_mkdir(sftp_client: SFTPClient, tmp_dir: str):
     target_dir = os.path.join(tmp_dir, "foo")
     sftp_client.mkdir(target_dir)
     assert os.path.exists(target_dir)
     assert os.path.isdir(target_dir)
 
 
-def test_rmdir(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_rmdir(sftp_client: SFTPClient, tmp_dir: str):
     target_dir = os.path.join(tmp_dir, "foo")
     os.makedirs(target_dir)
     sftp_client.rmdir(target_dir)
@@ -85,7 +85,7 @@ def test_rmdir(sftp_client: SFTPClient, tmp_dir: str) -> None:
     assert not os.path.isdir(target_dir)
 
 
-def test_chmod(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_chmod(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
     sftp_client.chmod(test_file, 0o600)
@@ -94,7 +94,7 @@ def test_chmod(sftp_client: SFTPClient, tmp_dir: str) -> None:
     assert st.st_mode & check_bits == 0o600
 
 
-def test_chown(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_chown(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
     # test process probably can't change file uids
@@ -102,7 +102,7 @@ def test_chown(sftp_client: SFTPClient, tmp_dir: str) -> None:
     sftp_client.chown(test_file, os.getuid(), os.getgid())
 
 
-def test_handle_stat(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_handle_stat(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
 
@@ -111,7 +111,7 @@ def test_handle_stat(sftp_client: SFTPClient, tmp_dir: str) -> None:
     handle.stat()
 
 
-def test_rename(sftp_client: SFTPClient, tmp_dir: str) -> None:
+def test_rename(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
     renamed_test_file = os.path.join(tmp_dir, "bar")
