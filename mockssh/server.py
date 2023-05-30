@@ -1,19 +1,16 @@
 import errno
 import logging
 import os
+import selectors
 import socket
 import subprocess
 import threading
-
-from mockssh.streaming import StreamTransfer
-
 from queue import Queue
-
-import selectors
 
 import paramiko
 
 from mockssh import sftp
+from mockssh.streaming import StreamTransfer
 
 __all__ = [
     "Server",

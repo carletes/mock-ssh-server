@@ -1,12 +1,11 @@
-import tempfile
 import logging
-import shutil
 import os
+import shutil
+import tempfile
 
 from pytest import fixture
 
 from mockssh import Server
-
 
 __all__ = [
     "server",

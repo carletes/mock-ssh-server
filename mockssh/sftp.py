@@ -1,10 +1,8 @@
 import logging
 import os
-
-from errno import EACCES, EDQUOT, EPERM, EROFS, ENOENT, ENOTDIR
+from errno import EACCES, EDQUOT, ENOENT, ENOTDIR, EPERM, EROFS
 
 import paramiko
-
 
 __all__ = [
     "SFTPServer",

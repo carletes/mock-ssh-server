@@ -1,6 +1,5 @@
 from mockssh import server
 
-
 __all__ = [
     "Server"
 ]
