@@ -30,7 +30,7 @@ jobs:
 
     - name: Test with tox
       if: matrix.os == 'ubuntu-latest'
-      run: tox
+      run: tox -e linux
 
     - name: Test with tox
       if: matrix.os == 'windows-latest'
