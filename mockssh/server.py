@@ -2,25 +2,18 @@ import collections.abc
 import errno
 import logging
 import os
+import selectors
 import socket
 import subprocess
 import threading
-
-from mockssh.streaming import StreamTransfer
-
-try:
-    from queue import Queue
-except ImportError:  # Python 2.7
-    from Queue import Queue
-
-try:
-    import selectors
-except ImportError:  # Python 2.7
-    import selectors2 as selectors
+from queue import Queue
 
 import paramiko
 
 from mockssh import sftp
+from mockssh.streaming import StreamTransfer
+from paramiko.client import SSHClient
+from typing import Dict
 
 __all__ = [
     "Server",
@@ -141,19 +134,19 @@ class Handler(paramiko.ServerInterface):
             if channel.chanid not in self.command_queues:
                 self.command_queues[channel.chanid] = Queue()
             t = threading.Thread(target=self.handle_client, args=(channel,))
-            t.setDaemon(True)
+            t.daemon = True
             t.start()
 
     def handle_client(self, channel):
         try:
             command = self.command_queues[channel.chanid].get(block=True)
             self.log.debug("Executing %s", command)
-            p = subprocess.Popen(command, shell=True,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
-            StreamTransfer(channel, p).run()
-            channel.send_exit_status(p.returncode)
+            with subprocess.Popen(command, shell=True,
+                                  stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE) as p:
+                StreamTransfer(channel, p).run()
+                channel.send_exit_status(p.returncode)
         except Exception:
             self.log.error("Error handling client (channel: %s)", channel,
                            exc_info=True)
@@ -226,7 +219,7 @@ class Server(object):
 
     log = logging.getLogger(__name__)
 
-    def __init__(self, users):
+    def __init__(self, users: Dict[str, str]) -> None:
         self._socket = None
         self._thread = None
         self._userdata = {}
@@ -259,23 +252,28 @@ class Server(object):
             )
 
 
-    def add_user(self, uid, private_key_path, keytype="ssh-rsa"):
-        # backwards-compatible
-        self._users_cached = None # invalidate cache
-        ud = {"type": "key",
-              "private_key_path": private_key_path,
-              "key_type": keytype
-        }
+    def add_user(self, uid: str, private_key_path: str, keytype: str="ssh-rsa") -> None:
+        if keytype == "ssh-rsa":
+            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+        elif keytype == "ssh-dss":
+            key = paramiko.DSSKey.from_private_key_file(private_key_path)
+        elif keytype in paramiko.ECDSAKey.supported_key_format_identifiers():
+            key = paramiko.ECDSAKey.from_private_key_file(private_key_path)
+        elif keytype == "ssh-ed25519":
+            key = paramiko.Ed25519Key.from_private_key_file(private_key_path)
+        else:
+            raise Exception("Unable to handle key of type {}".format(keytype))
 
         user_data = UserData(ud)
         self._userdata[uid] = user_data
 
-    def __enter__(self):
+        
+    def __enter__(self) -> "Server":
         self._socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, 0))
         s.listen(5)
         self._thread = t = threading.Thread(target=self._run)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
         return self
 
@@ -296,10 +294,10 @@ class Server(object):
                 self.log.debug("... got connection %s from %s", conn, addr)
                 handler = self.handler_cls(self, (conn, addr))
                 t = threading.Thread(target=handler.run)
-                t.setDaemon(True)
+                t.daemon = True
                 t.start()
 
-    def __exit__(self, *exc_info):
+    def __exit__(self, *exc_info) -> None:
         try:
             self._socket.shutdown(socket.SHUT_RDWR)
             self._socket.close()
@@ -308,8 +306,9 @@ class Server(object):
         self._socket = None
         self._thread = None
 
-    def client(self, uid):
-        ud = self._userdata[uid]
+        
+    def client(self, uid: str) -> SSHClient:
+        private_key_path, _ = self._users[uid]
         c = paramiko.SSHClient()
         host_keys = c.get_host_keys()
 
@@ -333,7 +332,7 @@ class Server(object):
         return c
 
     @property
-    def port(self):
+    def port(self) -> int:
         return self._socket.getsockname()[1]
 
     @property

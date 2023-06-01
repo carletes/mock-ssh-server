@@ -4,4 +4,6 @@
 *.egg-info/
 /build/
 /dist/
+.wt/
 .venv/
+.vscode/settings.json

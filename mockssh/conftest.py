@@ -1,12 +1,14 @@
-import tempfile
 import logging
-import shutil
 import os
+import shutil
+import tempfile
 
 from pytest import fixture
 
 from mockssh import Server
-
+import mockssh.server
+from paramiko.sftp_client import SFTPClient
+from typing import Iterator
 
 __all__ = [
     "server",
@@ -17,12 +19,12 @@ SAMPLE_USER_KEY = os.path.join(os.path.dirname(__file__), "sample-user-key")
 SAMPLE_USER_PASSWORD = "greeneggs&spam"
 
 @fixture
-def user_key_path():
+def user_key_path() -> str:
     return SAMPLE_USER_KEY
 
 
 @fixture(scope="function")
-def server():
+def server() -> Iterator[mockssh.server.Server]:
     users = {
         "sample-user": SAMPLE_USER_KEY,
         "sample-user2": {"type": "password", "password": SAMPLE_USER_PASSWORD},
@@ -33,14 +35,14 @@ def server():
 
 
 @fixture
-def sftp_client(server):
+def sftp_client(server: mockssh.server.Server) -> Iterator[SFTPClient]:
     uid = tuple(server.users)[0]
     c = server.client(uid)
     yield c.open_sftp()
 
 
 @fixture
-def tmp_dir():
+def tmp_dir() -> Iterator[str]:
     if hasattr(tempfile, "TemporaryDirectory"):
         # python 3
         with tempfile.TemporaryDirectory() as td:

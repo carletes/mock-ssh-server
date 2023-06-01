@@ -7,9 +7,11 @@ import paramiko
 from pytest import raises
 
 import mockssh
+from _pytest.monkeypatch import MonkeyPatch
+from mockssh.server import Server
 
 
-def test_ssh_session(server):
+def test_ssh_session(server: Server):
     for uid in server.users:
         print('Testing multiple connections with user', uid)
         print('=================================================')
@@ -23,7 +25,7 @@ def test_ssh_session(server):
                     platform.node())
 
 
-def test_ssh_failed_commands(server):
+def test_ssh_failed_commands(server: Server):
     for uid in server.users:
         with server.client(uid) as c:
             _, _, stderr = c.exec_command("rm /")
@@ -32,27 +34,27 @@ def test_ssh_failed_commands(server):
                     stderr.startswith("rm: /: is a directory"))
 
 
-def test_multiple_connections1(server):
+def test_multiple_connections1(server: Server):
     _test_multiple_connections(server)
 
 
-def test_multiple_connections2(server):
+def test_multiple_connections2(server: Server):
     _test_multiple_connections(server)
 
 
-def test_multiple_connections3(server):
+def test_multiple_connections3(server: Server):
     _test_multiple_connections(server)
 
 
-def test_multiple_connections4(server):
+def test_multiple_connections4(server: Server):
     _test_multiple_connections(server)
 
 
-def test_multiple_connections5(server):
+def test_multiple_connections5(server: Server):
     _test_multiple_connections(server)
 
 
-def _test_multiple_connections(server):
+def _test_multiple_connections(server: Server):
     # This test will deadlock without ea1e0f80aac7253d2d346732eefd204c6627f4c8
     fd, pkey_path = tempfile.mkstemp()
     user, private_key = list(server._users.items())[0]
@@ -65,13 +67,13 @@ def _test_multiple_connections(server):
     assert p.decode('utf-8').strip() == 'hello'
 
 
-def test_invalid_user(server):
+def test_invalid_user(server: Server):
     with raises(KeyError) as exc:
         server.client("unknown-user")
     assert exc.value.args[0] == "unknown-user"
 
 
-def test_add_user(server, user_key_path):
+def test_add_user(server: Server, user_key_path: str):
     with raises(KeyError):
         server.client("new-user")
 
@@ -81,7 +83,7 @@ def test_add_user(server, user_key_path):
         assert codecs.decode(stdout.read().strip(), "utf8") == "42"
 
 
-def test_overwrite_handler(server, monkeypatch):
+def test_overwrite_handler(server: Server, monkeypatch: MonkeyPatch):
     class MyHandler(mockssh.server.Handler):
         def check_auth_password(self, username, password):
             if username == "foo" and password == "bar":
