@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 
 import paramiko
-from pytest import raises
+from pytest import mark, raises
 
 import mockssh
 from _pytest.monkeypatch import MonkeyPatch
@@ -12,6 +12,13 @@ from mockssh.server import Server
 
 
 def test_ssh_session(server: Server):
+    for uid in server.users:
+        with server.client(uid) as c:
+            assert isinstance(c, paramiko.SSHClient)
+
+
+@mark.fails_on_windows
+def test_ssh_exec_command(server: Server):
     for uid in server.users:
         with server.client(uid) as c:
             _, stdout, _ = c.exec_command("ls /")
@@ -23,6 +30,7 @@ def test_ssh_session(server: Server):
                     platform.node())
 
 
+@mark.fails_on_windows
 def test_ssh_failed_commands(server: Server):
     for uid in server.users:
         with server.client(uid) as c:
@@ -32,26 +40,32 @@ def test_ssh_failed_commands(server: Server):
                     stderr.startswith("rm: /: is a directory"))
 
 
+@mark.fails_on_windows
 def test_multiple_connections1(server: Server):
     _test_multiple_connections(server)
 
 
+@mark.fails_on_windows
 def test_multiple_connections2(server: Server):
     _test_multiple_connections(server)
 
 
+@mark.fails_on_windows
 def test_multiple_connections3(server: Server):
     _test_multiple_connections(server)
 
 
+@mark.fails_on_windows
 def test_multiple_connections4(server: Server):
     _test_multiple_connections(server)
 
 
+@mark.fails_on_windows
 def test_multiple_connections5(server: Server):
     _test_multiple_connections(server)
 
 
+@mark.fails_on_windows
 def _test_multiple_connections(server: Server):
     # This test will deadlock without ea1e0f80aac7253d2d346732eefd204c6627f4c8
     fd, pkey_path = tempfile.mkstemp()
@@ -70,6 +84,7 @@ def test_invalid_user(server: Server):
     assert exc.value.args[0] == "unknown-user"
 
 
+@mark.fails_on_windows
 def test_add_user(server: Server, user_key_path: str):
     with raises(KeyError):
         server.client("new-user")
