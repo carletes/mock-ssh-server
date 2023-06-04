@@ -263,11 +263,16 @@ class Server(object):
             key = paramiko.Ed25519Key.from_private_key_file(private_key_path)
         else:
             raise Exception("Unable to handle key of type {}".format(keytype))
+        
+        self._users_cached = None # invalidate cache
+        ud = {"type": "key",
+              "private_key_path": private_key_path,
+              "key_type": keytype 
+            }
 
         user_data = UserData(ud)
         self._userdata[uid] = user_data
 
-        
     def __enter__(self) -> "Server":
         self._socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, 0))
@@ -306,9 +311,8 @@ class Server(object):
         self._socket = None
         self._thread = None
 
-        
-    def client(self, uid: str) -> SSHClient:
-        private_key_path, _ = self._users[uid]
+    def client(self, uid):
+        ud = self._userdata[uid]
         c = paramiko.SSHClient()
         host_keys = c.get_host_keys()
 
