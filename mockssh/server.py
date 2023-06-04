@@ -12,7 +12,6 @@ import paramiko
 
 from mockssh import sftp
 from mockssh.streaming import StreamTransfer
-from paramiko.client import SSHClient
 from typing import Dict
 
 __all__ = [
@@ -254,13 +253,13 @@ class Server(object):
 
     def add_user(self, uid: str, private_key_path: str, keytype: str="ssh-rsa") -> None:
         if keytype == "ssh-rsa":
-            key = paramiko.RSAKey.from_private_key_file(private_key_path)
+            paramiko.RSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-dss":
-            key = paramiko.DSSKey.from_private_key_file(private_key_path)
+            paramiko.DSSKey.from_private_key_file(private_key_path)
         elif keytype in paramiko.ECDSAKey.supported_key_format_identifiers():
-            key = paramiko.ECDSAKey.from_private_key_file(private_key_path)
+            paramiko.ECDSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-ed25519":
-            key = paramiko.Ed25519Key.from_private_key_file(private_key_path)
+            paramiko.Ed25519Key.from_private_key_file(private_key_path)
         else:
             raise Exception("Unable to handle key of type {}".format(keytype))
         
