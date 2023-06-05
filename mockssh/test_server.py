@@ -13,6 +13,8 @@ from mockssh.server import Server
 
 def test_ssh_session(server: Server):
     for uid in server.users:
+        print('Testing multiple connections with user', uid)
+        print('=================================================')
         with server.client(uid) as c:
             assert isinstance(c, paramiko.SSHClient)
 
@@ -72,6 +74,7 @@ def _test_multiple_connections(server: Server):
     user, private_key = list(server._users.items())[0]
     open(pkey_path, 'w').write(open(private_key[0]).read())
     ssh_command = 'ssh -oStrictHostKeyChecking=no '
+    ssh_command += '-oUserKnownHostsFile=/dev/null '
     ssh_command += "-i %s -p %s %s@localhost " % (pkey_path, server.port, user)
     ssh_command += 'echo hello'
     p = subprocess.check_output(ssh_command, shell=True)

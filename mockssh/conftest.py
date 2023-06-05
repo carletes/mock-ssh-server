@@ -16,7 +16,7 @@ __all__ = [
 
 
 SAMPLE_USER_KEY = os.path.join(os.path.dirname(__file__), "sample-user-key")
-
+SAMPLE_USER_PASSWORD = "greeneggs&spam"
 
 @fixture
 def user_key_path() -> str:
@@ -27,6 +27,8 @@ def user_key_path() -> str:
 def server() -> Iterator[mockssh.server.Server]:
     users = {
         "sample-user": SAMPLE_USER_KEY,
+        "sample-user2": {"type": "password", "password": SAMPLE_USER_PASSWORD},
+        "sample-user3": {"type": "key",  "private_key_path": SAMPLE_USER_KEY},
     }
     with Server(users) as s:
         yield s
