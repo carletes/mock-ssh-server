@@ -220,8 +220,8 @@ class Server(object):
     log = logging.getLogger(__name__)
 
     def __init__(self, users: Dict[str, str]) -> None:
-        self._socket = None
-        self._thread = None
+        self._socket = None # type: socket.socket | None
+        self._thread = None # type: threading.Thread | None
         self._userdata = {}
         self._users_cached = None
         for uid, credential in users.items():
