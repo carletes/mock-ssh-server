@@ -341,6 +341,8 @@ class Server(object):
 
     @property
     def port(self) -> int:
+        if self._socket is None:
+            raise RuntimeError("Server not running")
         return self._socket.getsockname()[1]
 
     @property
