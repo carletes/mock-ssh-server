@@ -205,7 +205,9 @@ class Handler(paramiko.ServerInterface):
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def get_allowed_auths(self, username):
-        ud = self.server._userdata[username]
+        ud = self.server._userdata.get(username)
+        if ud is None:
+            return "publickey"
         if ud.credential_type == 'key':
             return "publickey"
         else:
