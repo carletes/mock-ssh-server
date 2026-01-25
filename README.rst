@@ -45,6 +45,14 @@ As a `py.test`_ fixture::
                 assert os.access(target_fname, os.F_OK)
 
 
+User configuration
+------------------
+
+* Simple string (backward compatible): ``"username": "/path/to/private/key"``
+* Key-based with explicit type: ``"username": {"type": "key", "private_key_path": "/path/to/key", "key_type": "ssh-rsa"}``
+* Password-based: ``"username": {"type": "password", "password": "mypassword"}``
+
+
 .. _paramiko: http://www.paramiko.org/
 .. _py.test:  http://pytest.org/latest/
 .. image:: https://travis-ci.org/carletes/mock-ssh-server.svg
