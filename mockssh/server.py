@@ -306,11 +306,12 @@ class Server(object):
                 t.start()
 
     def __exit__(self, *exc_info) -> None:
-        try:
-            self._socket.shutdown(socket.SHUT_RDWR)
-            self._socket.close()
-        except Exception:
-            pass
+        if self._socket is not None:
+            try:
+                self._socket.shutdown(socket.SHUT_RDWR)
+                self._socket.close()
+            except Exception:
+                pass
         self._socket = None
         self._thread = None
 
