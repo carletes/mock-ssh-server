@@ -256,7 +256,10 @@ class Server(object):
         if keytype == "ssh-rsa":
             paramiko.RSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-dss":
-            paramiko.DSSKey.from_private_key_file(private_key_path)
+            try:
+                paramiko.DSSKey.from_private_key_file(private_key_path) # type: ignore[attr-defined]
+            except AttributeError as err:
+                raise NotImplementedError("DSS keys are not supported in Paramiko as of version 4.0.0") from err
         elif keytype in paramiko.ECDSAKey.supported_key_format_identifiers():
             paramiko.ECDSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-ed25519":
