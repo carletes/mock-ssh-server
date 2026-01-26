@@ -6,8 +6,7 @@ from mockssh.server import Server
 
 
 def first_user(server: Server) -> str:
-    for uid in server.users:
-        return uid
+    return next(iter(server.users))
 
 
 def random_string() -> str:

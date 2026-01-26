@@ -12,11 +12,22 @@ import paramiko
 
 from mockssh import sftp
 from mockssh.streaming import StreamTransfer
-from typing import Dict
+from typing import Dict, TypedDict, Literal
 
 __all__ = [
     "Server",
 ]
+
+
+class PasswordCredential(TypedDict):
+    type: Literal["password"]
+    password: str
+
+
+class KeyCredential(TypedDict):
+    type: Literal["key"]
+    private_key_path: str
+    key_type: str
 
 SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), "server-key")
 
@@ -219,9 +230,9 @@ class Server(object):
 
     log = logging.getLogger(__name__)
 
-    def __init__(self, users: Dict[str, str]) -> None:
-        self._socket = None
-        self._thread = None
+    def __init__(self, users: Dict[str, str | PasswordCredential | KeyCredential]) -> None:
+        self._socket: socket.socket | None = None
+        self._thread: threading.Thread | None = None
         self._userdata = {}
         self._users_cached = None
         for uid, credential in users.items():
@@ -256,7 +267,10 @@ class Server(object):
         if keytype == "ssh-rsa":
             paramiko.RSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-dss":
-            paramiko.DSSKey.from_private_key_file(private_key_path)
+            try:
+                paramiko.DSSKey.from_private_key_file(private_key_path) # type: ignore[attr-defined]
+            except AttributeError as err:
+                raise NotImplementedError("DSS keys are not supported in Paramiko as of version 4.0.0") from err
         elif keytype in paramiko.ECDSAKey.supported_key_format_identifiers():
             paramiko.ECDSAKey.from_private_key_file(private_key_path)
         elif keytype == "ssh-ed25519":
@@ -303,11 +317,12 @@ class Server(object):
                 t.start()
 
     def __exit__(self, *exc_info) -> None:
-        try:
-            self._socket.shutdown(socket.SHUT_RDWR)
-            self._socket.close()
-        except Exception:
-            pass
+        if self._socket is not None:
+            try:
+                self._socket.shutdown(socket.SHUT_RDWR)
+                self._socket.close()
+            except Exception:
+                pass
         self._socket = None
         self._thread = None
 
@@ -337,6 +352,8 @@ class Server(object):
 
     @property
     def port(self) -> int:
+        if self._socket is None:
+            raise RuntimeError("Server not running")
         return self._socket.getsockname()[1]
 
     @property

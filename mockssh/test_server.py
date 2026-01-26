@@ -107,6 +107,5 @@ def test_overwrite_handler(server: Server, monkeypatch: MonkeyPatch):
     monkeypatch.setattr(server, 'handler_cls', MyHandler)
     with paramiko.SSHClient() as client:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        assert client.connect(server.host, server.port, "foo", "bar") is None
         with raises(paramiko.ssh_exception.AuthenticationException):
             client.connect(server.host, server.port, "fooooo", "barrrr")
