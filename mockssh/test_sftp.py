@@ -10,6 +10,7 @@ def files_equal(fname1: str, fname2: str) -> bool:
         with open(fname1, "rb") as f1, open(fname2, "rb") as f2:
             if f1.read() == f2.read():
                 return True
+    return False
 
 
 def test_put(sftp_client: SFTPClient, tmp_dir: str):
