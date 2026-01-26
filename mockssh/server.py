@@ -12,11 +12,22 @@ import paramiko
 
 from mockssh import sftp
 from mockssh.streaming import StreamTransfer
-from typing import Dict
+from typing import Dict, TypedDict, Literal
 
 __all__ = [
     "Server",
 ]
+
+
+class PasswordCredential(TypedDict):
+    type: Literal["password"]
+    password: str
+
+
+class KeyCredential(TypedDict):
+    type: Literal["key"]
+    private_key_path: str
+    key_type: str
 
 SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), "server-key")
 
@@ -219,7 +230,7 @@ class Server(object):
 
     log = logging.getLogger(__name__)
 
-    def __init__(self, users: Dict[str, str]) -> None:
+    def __init__(self, users: Dict[str, str | PasswordCredential | KeyCredential]) -> None:
         self._socket: socket.socket | None = None
         self._thread: threading.Thread | None = None
         self._userdata = {}

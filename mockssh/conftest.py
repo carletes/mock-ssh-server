@@ -7,16 +7,17 @@ from pytest import fixture
 
 from mockssh import Server
 import mockssh.server
+from mockssh.server import PasswordCredential, KeyCredential
 from paramiko.sftp_client import SFTPClient
-from typing import Iterator
+from typing import Iterator, Dict, Union
 
 __all__ = [
     "server",
 ]
 
 
-SAMPLE_USER_KEY = os.path.join(os.path.dirname(__file__), "sample-user-key")
-SAMPLE_USER_PASSWORD = "greeneggs&spam"
+SAMPLE_USER_KEY: str = os.path.join(os.path.dirname(__file__), "sample-user-key")
+SAMPLE_USER_PASSWORD: str = "greeneggs&spam"
 
 @fixture
 def user_key_path() -> str:
@@ -25,10 +26,10 @@ def user_key_path() -> str:
 
 @fixture(scope="function")
 def server() -> Iterator[mockssh.server.Server]:
-    users = {
+    users: Dict[str, Union[str, PasswordCredential, KeyCredential]] = {
         "sample-user": SAMPLE_USER_KEY,
         "sample-user2": {"type": "password", "password": SAMPLE_USER_PASSWORD},
-        "sample-user3": {"type": "key",  "private_key_path": SAMPLE_USER_KEY},
+        "sample-user3": {"type": "key", "private_key_path": SAMPLE_USER_KEY, "key_type": "ssh-rsa"},
     }
     with Server(users) as s:
         yield s
