@@ -130,15 +130,13 @@ class Handler(paramiko.ServerInterface):
             channel = self.transport.accept()
             if channel is None:
                 break
-            if channel.chanid not in self.command_queues:
-                self.command_queues[channel.chanid] = Queue()
             t = threading.Thread(target=self.handle_client, args=(channel,))
             t.daemon = True
             t.start()
 
     def handle_client(self, channel):
         try:
-            command = self.command_queues[channel.chanid].get(block=True)
+            command = self.command_queues[channel.get_id()].get(block=True)
             self.log.debug("Executing %s", command)
             with subprocess.Popen(command, shell=True,
                                   stdin=subprocess.PIPE,
@@ -196,11 +194,12 @@ class Handler(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_channel_exec_request(self, channel, command):
-        self.command_queues.setdefault(channel.get_id(), Queue()).put(command)
+        self.command_queues[channel.get_id()].put(command)
         return True
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
+            self.command_queues.setdefault(chanid, Queue())
             return paramiko.OPEN_SUCCEEDED
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
