@@ -27,7 +27,7 @@ def test_ssh_exec_command(server: Server):
             assert "etc" in (codecs.decode(bit, "utf8")
                              for bit in stdout.read().split())
 
-            _, stdout, _ = c.exec_command("hostname")
+            _, stdout, _ = c.exec_command("uname -n")
             assert (codecs.decode(stdout.read().strip(), "utf8") ==
                     platform.node())
 
