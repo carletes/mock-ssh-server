@@ -149,6 +149,8 @@ class Handler(paramiko.ServerInterface):
         try:
             command = self.command_queues[channel.get_id()].get(block=True)
             self.log.debug("Executing %s", command)
+            if isinstance(command, bytes):
+                command = command.decode("utf-8")
             with subprocess.Popen(command, shell=True,
                                   stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE,

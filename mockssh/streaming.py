@@ -1,3 +1,5 @@
+import sys
+import threading
 import selectors
 
 
@@ -39,12 +41,43 @@ class StreamTransfer:
         return Stream(process_stream, process_stream.readline, write_func, lambda: None)
 
     def run(self):
+        if sys.platform == "win32":
+            self._run_with_threads()
+        else:
+            self._run_with_selectors()
+
+    def _run_with_selectors(self):
         with selectors.DefaultSelector() as selector:
             for stream in self.streams:
                 selector.register(stream.fd, selectors.EVENT_READ, data=stream)
 
             self.transfer(selector)
             self.drain(selector)
+
+    def _run_with_threads(self):
+        error_queue = []
+        lock = threading.Lock()
+
+        def transfer_thread(stream):
+            try:
+                stream.drain()
+            except Exception as e:
+                with lock:
+                    error_queue.append(e)
+
+        threads = [
+            threading.Thread(target=transfer_thread, args=(stream,), daemon=True)
+            for stream in self.streams
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        if error_queue:
+            raise error_queue[0]
 
     @staticmethod
     def ready_streams(selector):

@@ -1,10 +1,12 @@
 import codecs
 import platform
-import subprocess
-import tempfile
+import sys
+import threading
+from queue import Queue
+from typing import Tuple
 
 import paramiko
-from pytest import mark, raises
+from pytest import raises
 
 import mockssh
 from _pytest.monkeypatch import MonkeyPatch
@@ -19,66 +21,82 @@ def test_ssh_session(server: Server):
             assert isinstance(c, paramiko.SSHClient)
 
 
-@mark.fails_on_windows
 def test_ssh_exec_command(server: Server):
+    is_windows = sys.platform == "win32"
+
     for uid in server.users:
         with server.client(uid) as c:
-            _, stdout, _ = c.exec_command("ls /")
-            assert "etc" in (codecs.decode(bit, "utf8")
-                             for bit in stdout.read().split())
+            if is_windows:
+                _, stdout, _ = c.exec_command("dir C:\\")
+                output = codecs.decode(stdout.read(), "utf8")
+                assert ("Windows" in output or "Program Files" in output)
+            else:
+                _, stdout, _ = c.exec_command("ls /")
+                assert "etc" in (codecs.decode(bit, "utf8")
+                                 for bit in stdout.read().split())
 
-            _, stdout, _ = c.exec_command("uname -n")
+            hostname_cmd = "hostname" if is_windows else "uname -n"
+            _, stdout, _ = c.exec_command(hostname_cmd)
             assert (codecs.decode(stdout.read().strip(), "utf8") ==
                     platform.node())
 
 
-@mark.fails_on_windows
 def test_ssh_failed_commands(server: Server):
+    is_windows = sys.platform == "win32"
+
     for uid in server.users:
         with server.client(uid) as c:
-            _, _, stderr = c.exec_command("rm /")
-            stderr = codecs.decode(stderr.read(), "utf8")
-            assert (stderr.startswith("rm: cannot remove") or
-                    stderr.startswith("rm: /: is a directory"))
+            if is_windows:
+                _, _, stderr = c.exec_command("type C:\\Windows\\System32\\config\\SYSTEM")
+                stderr_output = codecs.decode(stderr.read(), "utf8")
+                assert stderr_output == "The process cannot access the file because it is being used by another process.\r\n"
+            else:
+                _, _, stderr = c.exec_command("rm /dev/null")
+                stderr_output = codecs.decode(stderr.read(), "utf8")
+                assert stderr_output == "rm: cannot remove '/dev/null': Permission denied\n"
 
 
-@mark.fails_on_windows
-def test_multiple_connections1(server: Server):
-    _test_multiple_connections(server)
+def test_concurrent_connections(server: Server):
+    results: Queue[Tuple[str, int, str]] = Queue()
+    threads = []
+    user = list(server.users)[0]
 
+    def connect_and_execute(thread_id: int):
+        try:
+            with server.client(user) as c:
+                _, stdout, _ = c.exec_command("echo hello")
+                output = codecs.decode(stdout.read().strip(), "utf8")
+                results.put(("success", thread_id, output))
+        except Exception as e:
+            results.put(("error", thread_id, str(e)))
 
-@mark.fails_on_windows
-def test_multiple_connections2(server: Server):
-    _test_multiple_connections(server)
+    for i in range(5):
+        t = threading.Thread(target=connect_and_execute, args=(i,))
+        t.daemon = True
+        t.start()
+        threads.append(t)
 
+    for i, t in enumerate(threads):
+        t.join(timeout=30)
+        if t.is_alive():
+            raise RuntimeError(f"Thread {i} timed out")
 
-@mark.fails_on_windows
-def test_multiple_connections3(server: Server):
-    _test_multiple_connections(server)
+    assert results.qsize() == 5
 
+    errors = []
+    outputs = []
+    for _ in range(5):
+        status, thread_id, msg = results.get()
+        if status == "error":
+            errors.append(f"Thread {thread_id}: {msg}")
+        else:
+            outputs.append((thread_id, msg))
 
-@mark.fails_on_windows
-def test_multiple_connections4(server: Server):
-    _test_multiple_connections(server)
+    if errors:
+        raise AssertionError(f"Errors: {'; '.join(errors)}")
 
-
-@mark.fails_on_windows
-def test_multiple_connections5(server: Server):
-    _test_multiple_connections(server)
-
-
-@mark.fails_on_windows
-def _test_multiple_connections(server: Server):
-    # This test will deadlock without ea1e0f80aac7253d2d346732eefd204c6627f4c8
-    fd, pkey_path = tempfile.mkstemp()
-    user, private_key = list(server._users.items())[0]
-    open(pkey_path, 'w').write(open(private_key[0]).read())
-    ssh_command = 'ssh -oStrictHostKeyChecking=no '
-    ssh_command += '-oUserKnownHostsFile=/dev/null '
-    ssh_command += "-i %s -p %s %s@localhost " % (pkey_path, server.port, user)
-    ssh_command += 'echo hello'
-    p = subprocess.check_output(ssh_command, shell=True)
-    assert p.decode('utf-8').strip() == 'hello'
+    for thread_id, output in outputs:
+        assert output == "hello"
 
 
 def test_invalid_user(server: Server):
@@ -87,7 +105,6 @@ def test_invalid_user(server: Server):
     assert exc.value.args[0] == "unknown-user"
 
 
-@mark.fails_on_windows
 def test_add_user(server: Server, user_key_path: str):
     with raises(KeyError):
         server.client("new-user")
