@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mock-ssh-server"
+version = "0.10.0"
+description = "Mock SSH server for testing purposes"
+readme = "README.rst"
+authors = [
+    {name = "Carlos Valiente", email = "carlos@pepelabs.net"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "paramiko",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/carletes/mock-ssh-server"
+
+[project.optional-dependencies]
+dev = [
+    "pyflakes",
+    "tox",
+    "pytest",
+    "types-paramiko",
+    "types-setuptools",
+    "mypy",
+]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.package-data]
+mockssh = [
+    "sample-user-key",
+    "sample-user-key.pub",
+    "server-key",
+    "server-key.pub",
+]
