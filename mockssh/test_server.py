@@ -1,4 +1,5 @@
 import codecs
+import locale
 import platform
 import sys
 import threading
@@ -6,6 +7,7 @@ from queue import Queue
 from typing import Tuple
 
 import paramiko
+import pytest
 from pytest import raises
 
 import mockssh
@@ -23,13 +25,14 @@ def test_ssh_session(server: Server):
 
 def test_ssh_exec_command(server: Server):
     is_windows = sys.platform == "win32"
+    encoding = locale.getpreferredencoding(False)
 
     for uid in server.users:
         with server.client(uid) as c:
             if is_windows:
-                _, stdout, _ = c.exec_command("dir C:\\")
-                output = codecs.decode(stdout.read(), "utf8")
-                assert ("Windows" in output or "Program Files" in output)
+                _, stdout, _ = c.exec_command("cmd /c echo %OS%")
+                output = codecs.decode(stdout.read(), encoding, errors="replace")
+                assert "Windows" in output
             else:
                 _, stdout, _ = c.exec_command("ls /")
                 assert "etc" in (codecs.decode(bit, "utf8")
@@ -37,20 +40,21 @@ def test_ssh_exec_command(server: Server):
 
             hostname_cmd = "hostname" if is_windows else "uname -n"
             _, stdout, _ = c.exec_command(hostname_cmd)
-            assert (codecs.decode(stdout.read().strip(), "utf8") ==
+            assert (codecs.decode(stdout.read().strip(), encoding, errors="replace") ==
                     platform.node())
 
 
 def test_ssh_failed_commands(server: Server):
     is_windows = sys.platform == "win32"
+    encoding = locale.getpreferredencoding(False)
 
     for uid in server.users:
         with server.client(uid) as c:
             if is_windows:
-                _, _, stderr = c.exec_command("type C:\\Windows\\System32\\config\\SYSTEM")
+                _, _, stderr = c.exec_command("type C:\\nonexistent_file_12345")
             else:
-                _, _, stderr = c.exec_command("rm /dev/null")
-            stderr_output = codecs.decode(stderr.read(), "utf8")
+                _, _, stderr = c.exec_command("ls /nonexistent_dir_12345")
+            stderr_output = codecs.decode(stderr.read(), encoding, errors="replace")
             assert stderr_output.strip()
 
 
@@ -94,6 +98,15 @@ def test_concurrent_connections(server: Server):
         raise AssertionError(f"Errors: {'; '.join(errors)}")
 
     for thread_id, output in outputs:
+        assert output == "hello"
+
+
+@pytest.mark.parametrize("trial", range(5))
+def test_sequential_exec_command(server: Server, trial: int):
+    user = list(server.users)[0]
+    with server.client(user) as c:
+        _, stdout, _ = c.exec_command("echo hello")
+        output = codecs.decode(stdout.read().strip(), "utf8")
         assert output == "hello"
 
 

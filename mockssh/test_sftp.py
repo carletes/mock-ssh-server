@@ -92,21 +92,23 @@ def test_rmdir(sftp_client: SFTPClient, tmp_dir: str):
     assert not os.path.isdir(target_dir)
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="POSIX permission bits are not meaningful on Windows")
 def test_chmod(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
     sftp_client.chmod(test_file, 0o600)
-    if sys.platform != "win32":
-        st = os.stat(test_file)
-        check_bits = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
-        assert st.st_mode & check_bits == 0o600
+    st = os.stat(test_file)
+    check_bits = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
+    assert st.st_mode & check_bits == 0o600
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="chown is not supported on Windows")
 def test_chown(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
-    if sys.platform != "win32":
-        sftp_client.chown(test_file, os.getuid(), os.getgid())
+    sftp_client.chown(test_file, os.getuid(), os.getgid())
 
 
 def test_handle_stat(sftp_client: SFTPClient, tmp_dir: str):
