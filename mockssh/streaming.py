@@ -19,10 +19,7 @@ class Stream:
 
     def drain(self):
         while True:
-            try:
-                if not self.transfer():
-                    return
-            except (BrokenPipeError, OSError):
+            if not self.transfer():
                 return
 
 
@@ -67,7 +64,6 @@ class StreamTransfer:
         stdout_stream = self.streams[1]
         stderr_stream = self.streams[2]
 
-        old_timeout = stdin_stream.fd.gettimeout()
         stdin_stream.fd.settimeout(0.5)
 
         def stdin_thread():
@@ -113,11 +109,6 @@ class StreamTransfer:
         stop_event.set()
         stdin_t.join(timeout=5)
 
-        try:
-            stdin_stream.fd.settimeout(old_timeout)
-        except (OSError, ValueError):
-            pass
-
         if error_queue:
             raise error_queue[0]
 
@@ -127,32 +118,9 @@ class StreamTransfer:
 
     def transfer(self, selector):
         while self.process.poll() is None:
-            try:
-                ready = list(self.ready_streams(selector))
-            except (OSError, ValueError):
-                break
-            for stream in ready:
-                try:
-                    stream.transfer()
-                except (BrokenPipeError, OSError):
-                    pass
+            for stream in self.ready_streams(selector):
+                stream.transfer()
 
     def drain(self, selector):
-        remaining = set(self.streams)
-        while remaining:
-            try:
-                ready = list(self.ready_streams(selector))
-            except (OSError, ValueError):
-                break
-            if not ready:
-                break
-            drained_this_pass = set()
-            for stream in ready:
-                try:
-                    stream.drain()
-                except (BrokenPipeError, OSError):
-                    pass
-                drained_this_pass.add(stream)
-            remaining -= drained_this_pass
-            if drained_this_pass == set(ready):
-                break
+        for stream in self.ready_streams(selector):
+            stream.drain()

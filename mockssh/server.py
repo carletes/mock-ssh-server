@@ -29,9 +29,6 @@ class KeyCredential(TypedDict):
     private_key_path: str
     key_type: str
 
-_WSAENOTSOCK = getattr(errno, "WSAENOTSOCK", 10038)
-_WSAEINVAL = getattr(errno, "WSAEINVAL", 10022)
-
 SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), "server-key")
 
 
@@ -305,29 +302,33 @@ class Server(object):
 
     def _run(self):
         sock = self._socket
-        with selectors.DefaultSelector() as selector:
+        try:
+            selector = selectors.DefaultSelector()
+            selector.register(sock, selectors.EVENT_READ)
+        except (OSError, ValueError):
+            return
+        while sock.fileno() > 0:
+            self.log.debug("Waiting for incoming connections ...")
             try:
-                selector.register(sock, selectors.EVENT_READ)
+                events = selector.select(timeout=1.0)
             except (OSError, ValueError):
-                return
-            while sock.fileno() > 0:
-                self.log.debug("Waiting for incoming connections ...")
+                break
+            if events:
                 try:
-                    events = selector.select(timeout=1.0)
-                except (OSError, ValueError):
-                    break
-                if events:
-                    try:
-                        conn, addr = sock.accept()
-                    except OSError as ex:
-                        if ex.errno in (errno.EBADF, errno.EINVAL, _WSAENOTSOCK, _WSAEINVAL):
-                            break
-                        raise
-                    self.log.debug("... got connection %s from %s", conn, addr)
-                    handler = self.handler_cls(self, (conn, addr))
-                    t = threading.Thread(target=handler.run)
-                    t.daemon = True
-                    t.start()
+                    conn, addr = sock.accept()
+                except OSError as ex:
+                    if ex.errno in (errno.EBADF, errno.EINVAL, 10038, 10022):
+                        break
+                    raise
+                self.log.debug("... got connection %s from %s", conn, addr)
+                handler = self.handler_cls(self, (conn, addr))
+                t = threading.Thread(target=handler.run)
+                t.daemon = True
+                t.start()
+        try:
+            selector.close()
+        except (OSError, ValueError):
+            pass
 
     def __exit__(self, *exc_info) -> None:
         if self._socket is not None:
