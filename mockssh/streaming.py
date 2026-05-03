@@ -81,7 +81,7 @@ class StreamTransfer:
                     except (OSError, ValueError):
                         break
                 try:
-                    stdin_stream.write.close()
+                    self.process.stdin.close()
                 except (OSError, ValueError):
                     pass
             except Exception as e:
