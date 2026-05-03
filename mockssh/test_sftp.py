@@ -2,6 +2,7 @@ import os
 import stat
 import sys
 
+import pytest
 from pytest import fixture, raises
 from paramiko.sftp_client import SFTPClient
 
@@ -26,6 +27,8 @@ def test_get(sftp_client: SFTPClient, tmp_dir: str):
     assert files_equal(target_fname, __file__)
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="Symlinks require SeCreateSymbolicLinkPrivilege on Windows")
 def test_symlink(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
@@ -35,6 +38,8 @@ def test_symlink(sftp_client: SFTPClient, tmp_dir: str):
     assert os.path.islink(bar)
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="Symlinks require SeCreateSymbolicLinkPrivilege on Windows")
 def test_lstat(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")

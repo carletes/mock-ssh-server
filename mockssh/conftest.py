@@ -38,8 +38,8 @@ def server() -> Iterator[mockssh.server.Server]:
 @fixture
 def sftp_client(server: mockssh.server.Server) -> Iterator[SFTPClient]:
     uid = tuple(server.users)[0]
-    c = server.client(uid)
-    yield c.open_sftp()
+    with server.client(uid) as c:
+        yield c.open_sftp()
 
 
 @fixture
