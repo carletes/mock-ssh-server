@@ -1,7 +1,9 @@
 import os
 import stat
+import sys
 
-from pytest import fixture, mark, raises
+import pytest
+from pytest import fixture, raises
 from paramiko.sftp_client import SFTPClient
 
 
@@ -25,7 +27,8 @@ def test_get(sftp_client: SFTPClient, tmp_dir: str):
     assert files_equal(target_fname, __file__)
 
 
-@mark.fails_on_windows
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="Symlinks require SeCreateSymbolicLinkPrivilege on Windows")
 def test_symlink(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
@@ -35,7 +38,8 @@ def test_symlink(sftp_client: SFTPClient, tmp_dir: str):
     assert os.path.islink(bar)
 
 
-@mark.fails_on_windows
+@pytest.mark.skipif(sys.platform == "win32",
+                     reason="Symlinks require SeCreateSymbolicLinkPrivilege on Windows")
 def test_lstat(sftp_client: SFTPClient, tmp_dir: str):
     foo = os.path.join(tmp_dir, "foo")
     bar = os.path.join(tmp_dir, "bar")
@@ -88,23 +92,21 @@ def test_rmdir(sftp_client: SFTPClient, tmp_dir: str):
     assert not os.path.isdir(target_dir)
 
 
-@mark.fails_on_windows
 def test_chmod(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
     sftp_client.chmod(test_file, 0o600)
-    st = os.stat(test_file)
-    check_bits = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
-    assert st.st_mode & check_bits == 0o600
+    if sys.platform != "win32":
+        st = os.stat(test_file)
+        check_bits = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
+        assert st.st_mode & check_bits == 0o600
 
 
-@mark.fails_on_windows
 def test_chown(sftp_client: SFTPClient, tmp_dir: str):
     test_file = os.path.join(tmp_dir, "foo")
     open(test_file, "w").write("X")
-    # test process probably can't change file uids
-    # so just test if no exception occurs
-    sftp_client.chown(test_file, os.getuid(), os.getgid())
+    if sys.platform != "win32":
+        sftp_client.chown(test_file, os.getuid(), os.getgid())
 
 
 def test_handle_stat(sftp_client: SFTPClient, tmp_dir: str):

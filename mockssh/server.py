@@ -149,11 +149,15 @@ class Handler(paramiko.ServerInterface):
         try:
             command = self.command_queues[channel.get_id()].get(block=True)
             self.log.debug("Executing %s", command)
+            if isinstance(command, bytes):
+                command = command.decode("utf-8")
             with subprocess.Popen(command, shell=True,
                                   stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE) as p:
                 StreamTransfer(channel, p).run()
+                if p.returncode is None:
+                    p.wait()
                 channel.send_exit_status(p.returncode)
         except Exception:
             self.log.error("Error handling client (channel: %s)", channel,
@@ -298,16 +302,22 @@ class Server(object):
 
     def _run(self):
         sock = self._socket
-        selector = selectors.DefaultSelector()
-        selector.register(sock, selectors.EVENT_READ)
+        try:
+            selector = selectors.DefaultSelector()
+            selector.register(sock, selectors.EVENT_READ)
+        except (OSError, ValueError):
+            return
         while sock.fileno() > 0:
             self.log.debug("Waiting for incoming connections ...")
-            events = selector.select(timeout=1.0)
+            try:
+                events = selector.select(timeout=1.0)
+            except (OSError, ValueError):
+                break
             if events:
                 try:
                     conn, addr = sock.accept()
                 except OSError as ex:
-                    if ex.errno in (errno.EBADF, errno.EINVAL):
+                    if ex.errno in (errno.EBADF, errno.EINVAL, 10038, 10022):
                         break
                     raise
                 self.log.debug("... got connection %s from %s", conn, addr)
@@ -315,6 +325,10 @@ class Server(object):
                 t = threading.Thread(target=handler.run)
                 t.daemon = True
                 t.start()
+        try:
+            selector.close()
+        except (OSError, ValueError):
+            pass
 
     def __exit__(self, *exc_info) -> None:
         if self._socket is not None:

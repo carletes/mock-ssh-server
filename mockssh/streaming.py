@@ -1,3 +1,6 @@
+import socket
+import sys
+import threading
 import selectors
 
 
@@ -39,12 +42,75 @@ class StreamTransfer:
         return Stream(process_stream, process_stream.readline, write_func, lambda: None)
 
     def run(self):
+        if sys.platform == "win32":
+            self._run_with_threads()
+        else:
+            self._run_with_selectors()
+
+    def _run_with_selectors(self):
         with selectors.DefaultSelector() as selector:
             for stream in self.streams:
                 selector.register(stream.fd, selectors.EVENT_READ, data=stream)
 
             self.transfer(selector)
             self.drain(selector)
+
+    def _run_with_threads(self):
+        error_queue = []
+        lock = threading.Lock()
+        stop_event = threading.Event()
+
+        stdin_stream = self.streams[0]
+        stdout_stream = self.streams[1]
+        stderr_stream = self.streams[2]
+
+        stdin_stream.fd.settimeout(0.5)
+
+        def stdin_thread():
+            try:
+                while not stop_event.is_set():
+                    try:
+                        data = stdin_stream.fd.recv(self.BUFFER_SIZE)
+                    except socket.timeout:
+                        continue
+                    if not data:
+                        break
+                    try:
+                        stdin_stream.write(data)
+                        stdin_stream.flush()
+                    except (OSError, ValueError):
+                        break
+                try:
+                    self.process.stdin.close()
+                except (OSError, ValueError):
+                    pass
+            except Exception as e:
+                with lock:
+                    error_queue.append(e)
+
+        def output_thread(stream):
+            try:
+                stream.drain()
+            except Exception as e:
+                with lock:
+                    error_queue.append(e)
+
+        stdin_t = threading.Thread(target=stdin_thread, daemon=True)
+        stdout_t = threading.Thread(target=output_thread, args=(stdout_stream,), daemon=True)
+        stderr_t = threading.Thread(target=output_thread, args=(stderr_stream,), daemon=True)
+
+        stdin_t.start()
+        stdout_t.start()
+        stderr_t.start()
+
+        stdout_t.join()
+        stderr_t.join()
+
+        stop_event.set()
+        stdin_t.join(timeout=5)
+
+        if error_queue:
+            raise error_queue[0]
 
     @staticmethod
     def ready_streams(selector):
